@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do Convex</title>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="container">
+
+    <header>
+      <h1>To‑Do List Convex</h1>
+      <p>Demonstração CRUD + Realtime + Backend</p>
+    </header>
+
+    <section class="summary">
+      <div class="card">
+        <h3>Total</h3>
+        <span id="total">0</span>
+      </div>
+
+      <div class="card">
+        <h3>Concluídas</h3>
+        <span id="completed">0</span>
+      </div>
+
+      <div class="card">
+        <h3>Pendentes</h3>
+        <span id="pending">0</span>
+      </div>
+    </section>
+
+    <section class="form">
+      <input
+        type="text"
+        id="title"
+        placeholder="Título da tarefa"
+      >
+
+      <textarea
+        id="description"
+        placeholder="Descrição da tarefa"
+      ></textarea>
+
+      <button id="createBtn">
+        Adicionar Tarefa
+      </button>
+    </section>
+
+    <ul id="tasks"></ul>
+
+  </div>
+
+  <script type="module" src="/app.js"></script>
+
+</body>
+</html>
