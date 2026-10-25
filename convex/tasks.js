@@ -34,17 +34,26 @@ export const createTask = mutation({
     ownerId: v.string(),
   },
 
-  handler: async (ctx, args) => {
-    const now = Date.now();
+handler: async (ctx, args) => {
+  const identity =
+    await ctx.auth.getUserIdentity();
 
-    const id = await ctx.db.insert(
-      "tasks",
-      {
-        title: args.title,
-        description: args.description,
-        completed: false,
+  if (!identity) {
+    throw new Error(
+      "Usuário não autenticado"
+    );
+  }
 
-        ownerId: args.ownerId,
+  const now = Date.now();
+
+  const id = await ctx.db.insert(
+    "tasks",
+    {
+      title: args.title,
+      description: args.description,
+      completed: false,
+
+      ownerId: identity.subject,
 
         createdAt: now,
         updatedAt: now,

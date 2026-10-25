@@ -1,16 +1,26 @@
 import { useState } from "react";
-import { useConvexAuth } from "convex/react";
-import { useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
+import {
+  useConvexAuth,
+  useQuery,
+  useMutation,
+} from "convex/react";
+
+import {
+  useAuthActions,
+} from "@convex-dev/auth/react";
 
 import { api } from "../../convex/_generated/api";
 
 function App() {
-  const { isAuthenticated, isLoading } =
-    useConvexAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+  } = useConvexAuth();
 
-  const { signIn, signOut } =
-    useAuthActions();
+  const {
+    signIn,
+    signOut,
+  } = useAuthActions();
 
   const [mode, setMode] =
     useState("signIn");
@@ -19,19 +29,38 @@ function App() {
     api.user.currentUserId
   );
 
-  const tasks = useQuery(
-  api.tasks.getTasks,
-  {
-    ownerId: ""
-  }
-);
+  const user = useQuery(
+  api.user.currentUser
+  );
 
-const summary = useQuery(
-  api.summary.getSummary,
-  {
-    ownerId: ""
-  }
-);
+  const tasks = useQuery(
+    api.tasks.getTasks,
+    {
+      ownerId: "",
+    }
+  );
+
+  const summary = useQuery(
+    api.summary.getSummary,
+    {
+      ownerId: "",
+    }
+  );
+
+  const createTask =
+    useMutation(
+      api.tasks.createTask
+    );
+
+  const updateTask =
+    useMutation(
+      api.tasks.updateTask
+    );
+
+  const deleteTask =
+    useMutation(
+      api.tasks.deleteTask
+    );
 
   if (isLoading) {
     return <h1>Carregando...</h1>;
@@ -69,7 +98,8 @@ const summary = useQuery(
             required
           />
 
-          <br /><br />
+          <br />
+          <br />
 
           <input
             name="password"
@@ -78,7 +108,8 @@ const summary = useQuery(
             required
           />
 
-          <br /><br />
+          <br />
+          <br />
 
           <button type="submit">
             {mode === "signIn"
@@ -106,23 +137,21 @@ const summary = useQuery(
     );
   }
 
-if (
-  userId === undefined ||
-  tasks === undefined ||
-  summary === undefined
-) {
-  return <h1>Carregando...</h1>;
-}
+  if (
+    userId === undefined ||
+    tasks === undefined ||
+    summary === undefined
+  ) {
+    return <h1>Carregando...</h1>;
+  }
 
 return (
   <div style={{ padding: "2rem" }}>
-    <h1>To-Do React + Convex</h1>
+    <h1>To-Do List | Convex</h1>
 
     <p>
-      Usuário:
+      Sessão ativa ✅
     </p>
-
-    <pre>{userId}</pre>
 
     <button
       onClick={() => signOut()}
@@ -132,31 +161,137 @@ return (
 
     <hr />
 
+    <h2>Nova tarefa</h2>
+
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault();
+
+        const form =
+          event.currentTarget;
+
+        const title =
+          form.title.value.trim();
+
+        const description =
+          form.description.value.trim();
+
+        if (!title) return;
+
+        await createTask({
+          title,
+          description,
+          ownerId: "",
+        });
+
+        form.reset();
+      }}
+    >
+      <input
+        name="title"
+        placeholder="Título"
+        required
+      />
+
+      <br />
+      <br />
+
+      <textarea
+        name="description"
+        placeholder="Descrição"
+      />
+
+      <br />
+      <br />
+
+      <button type="submit">
+        Criar tarefa
+      </button>
+    </form>
+
+    <hr />
+
     <h2>Resumo</h2>
 
-    <p>Total: {summary.total}</p>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: "1rem",
+        marginBottom: "2rem",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          minWidth: "120px",
+          padding: "1rem",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          background: "#f8f8f8",
+        }}
+      >
+        <strong>Total</strong>
 
-    <p>
-      Concluídas:
-      {summary.completed}
-    </p>
+        <p>{summary.total}</p>
+      </div>
 
-    <p>
-      Pendentes:
-      {summary.pending}
-    </p>
+      <div
+        style={{
+          minWidth: "120px",
+          padding: "1rem",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          background: "#f8f8f8",
+        }}
+      >
+        <strong>Concluídas</strong>
+
+        <p>{summary.completed}</p>
+      </div>
+
+      <div
+        style={{
+          minWidth: "120px",
+          padding: "1rem",
+          border: "1px solid #ccc",
+          borderRadius: "10px",
+          background: "#f8f8f8",
+        }}
+      >
+        <strong>Pendentes</strong>
+
+        <p>{summary.pending}</p>
+      </div>
+    </div>
 
     <hr />
 
     <h2>Tarefas</h2>
+    <p>
+      Quantidade encontrada:
+      {" "}
+      {tasks.length}
+    </p>
+
+    {tasks.length === 0 && (
+      <p>
+        Nenhuma tarefa encontrada.
+      </p>
+    )}
 
     {tasks.map((task) => (
       <div
         key={task._id}
         style={{
           border: "1px solid #ccc",
+          borderRadius: "10px",
           padding: "1rem",
           marginBottom: "1rem",
+          background:
+            task.completed
+              ? "#f0fff0"
+              : "#fff",
         }}
       >
         <strong>
@@ -167,16 +302,58 @@ return (
           {task.description}
         </p>
 
-        <small>
+        <p
+          style={{
+            color: task.completed
+              ? "green"
+              : "orange",
+            fontWeight: "bold",
+          }}
+        >
           {task.completed
             ? "✅ Concluída"
             : "⏳ Pendente"}
-        </small>
+        </p>
+
+        <button
+          onClick={() =>
+            updateTask({
+              id: task._id,
+              completed:
+                !task.completed,
+            })
+          }
+        >
+          {task.completed
+            ? "Reabrir"
+            : "Concluir"}
+        </button>
+
+        {" "}
+
+        <button
+          onClick={() => {
+            const confirmed =
+              confirm(
+                "Deseja excluir?"
+              );
+
+            if (
+              !confirmed
+            )
+              return;
+
+            deleteTask({
+              id: task._id,
+            });
+          }}
+        >
+          Excluir
+        </button>
       </div>
     ))}
   </div>
 );
-
 }
 
 export default App;
