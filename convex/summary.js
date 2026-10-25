@@ -6,11 +6,22 @@ export const getSummary = query({
     ownerId: v.string(),
   },
 
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
+    const identity =
+      await ctx.auth.getUserIdentity();
+
+  if (!identity) {
+    return {
+      total: 0,
+      completed: 0,
+      pending: 0,
+    };
+  }
+
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_owner", (q) =>
-        q.eq("ownerId", args.ownerId)
+        q.eq("ownerId", identity.subject)
       )
       .collect();
 
@@ -20,7 +31,8 @@ export const getSummary = query({
       (task) => task.completed
     ).length;
 
-    const pending = total - completed;
+    const pending =
+      total - completed;
 
     return {
       total,

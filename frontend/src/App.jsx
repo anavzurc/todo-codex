@@ -1,60 +1,182 @@
+import { useState } from "react";
+import { useConvexAuth } from "convex/react";
 import { useQuery } from "convex/react";
+import { useAuthActions } from "@convex-dev/auth/react";
+
 import { api } from "../../convex/_generated/api";
 
 function App() {
-  const tasks = useQuery(api.tasks.getTasks, {
-    ownerId: "usuario-demo",
-  });
+  const { isAuthenticated, isLoading } =
+    useConvexAuth();
 
-  const summary = useQuery(api.summary.getSummary, {
-    ownerId: "usuario-demo",
-  });
+  const { signIn, signOut } =
+    useAuthActions();
 
-  if (tasks === undefined || summary === undefined) {
-    return <h2>Carregando...</h2>;
+  const [mode, setMode] =
+    useState("signIn");
+
+  const userId = useQuery(
+    api.user.currentUserId
+  );
+
+  const tasks = useQuery(
+  api.tasks.getTasks,
+  {
+    ownerId: ""
+  }
+);
+
+const summary = useQuery(
+  api.summary.getSummary,
+  {
+    ownerId: ""
+  }
+);
+
+  if (isLoading) {
+    return <h1>Carregando...</h1>;
   }
 
-  return (
-    <div
-      style={{
-        padding: "2rem",
-        fontFamily: "Arial",
-      }}
-    >
-      <h1>To-Do React + Convex</h1>
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: "2rem" }}>
+        <h1>Autenticação</h1>
 
-      <h2>Resumo</h2>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
 
-      <p>Total: {summary.total}</p>
-      <p>Concluídas: {summary.completed}</p>
-      <p>Pendentes: {summary.pending}</p>
+            const formData =
+              new FormData(
+                event.currentTarget
+              );
 
-      <hr />
+            formData.set(
+              "flow",
+              mode
+            );
 
-      <h2>Tarefas</h2>
-
-      {tasks.map((task) => (
-        <div
-          key={task._id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "1rem",
-            marginBottom: "1rem",
+            await signIn(
+              "password",
+              formData
+            );
           }}
         >
-          <strong>{task.title}</strong>
+          <input
+            name="email"
+            type="email"
+            placeholder="Email"
+            required
+          />
 
-          <p>{task.description}</p>
+          <br /><br />
 
-          <small>
-            {task.completed
-              ? "✅ Concluída"
-              : "⏳ Pendente"}
-          </small>
-        </div>
-      ))}
-    </div>
-  );
+          <input
+            name="password"
+            type="password"
+            placeholder="Senha"
+            required
+          />
+
+          <br /><br />
+
+          <button type="submit">
+            {mode === "signIn"
+              ? "Entrar"
+              : "Criar Conta"}
+          </button>
+        </form>
+
+        <br />
+
+        <button
+          onClick={() =>
+            setMode(
+              mode === "signIn"
+                ? "signUp"
+                : "signIn"
+            )
+          }
+        >
+          {mode === "signIn"
+            ? "Criar conta"
+            : "Já tenho conta"}
+        </button>
+      </div>
+    );
+  }
+
+if (
+  userId === undefined ||
+  tasks === undefined ||
+  summary === undefined
+) {
+  return <h1>Carregando...</h1>;
+}
+
+return (
+  <div style={{ padding: "2rem" }}>
+    <h1>To-Do React + Convex</h1>
+
+    <p>
+      Usuário:
+    </p>
+
+    <pre>{userId}</pre>
+
+    <button
+      onClick={() => signOut()}
+    >
+      Sair
+    </button>
+
+    <hr />
+
+    <h2>Resumo</h2>
+
+    <p>Total: {summary.total}</p>
+
+    <p>
+      Concluídas:
+      {summary.completed}
+    </p>
+
+    <p>
+      Pendentes:
+      {summary.pending}
+    </p>
+
+    <hr />
+
+    <h2>Tarefas</h2>
+
+    {tasks.map((task) => (
+      <div
+        key={task._id}
+        style={{
+          border: "1px solid #ccc",
+          padding: "1rem",
+          marginBottom: "1rem",
+        }}
+      >
+        <strong>
+          {task.title}
+        </strong>
+
+        <p>
+          {task.description}
+        </p>
+
+        <small>
+          {task.completed
+            ? "✅ Concluída"
+            : "⏳ Pendente"}
+        </small>
+      </div>
+    ))}
+  </div>
+);
+
 }
 
 export default App;

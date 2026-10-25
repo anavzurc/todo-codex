@@ -6,11 +6,18 @@ export const getTasks = query({
     ownerId: v.string(),
   },
 
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
+    const identity =
+      await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+  return [];
+    }
+
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_owner", (q) =>
-        q.eq("ownerId", args.ownerId)
+        q.eq("ownerId", identity.subject)
       )
       .collect();
 
@@ -30,16 +37,19 @@ export const createTask = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    const id = await ctx.db.insert("tasks", {
-      title: args.title,
-      description: args.description,
-      completed: false,
+    const id = await ctx.db.insert(
+      "tasks",
+      {
+        title: args.title,
+        description: args.description,
+        completed: false,
 
-      ownerId: args.ownerId,
+        ownerId: args.ownerId,
 
-      createdAt: now,
-      updatedAt: now,
-    });
+        createdAt: now,
+        updatedAt: now,
+      }
+    );
 
     return id;
   },
@@ -58,7 +68,9 @@ export const updateTask = mutation({
     const task = await ctx.db.get(args.id);
 
     if (!task) {
-      throw new Error("Tarefa não encontrada");
+      throw new Error(
+        "Tarefa não encontrada"
+      );
     }
 
     await ctx.db.patch(args.id, {
@@ -88,7 +100,9 @@ export const deleteTask = mutation({
     const task = await ctx.db.get(args.id);
 
     if (!task) {
-      throw new Error("Tarefa não encontrada");
+      throw new Error(
+        "Tarefa não encontrada"
+      );
     }
 
     await ctx.db.delete(args.id);
