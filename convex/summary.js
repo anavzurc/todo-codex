@@ -21,8 +21,10 @@ export const getSummary = query({
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_owner", (q) =>
-        q.eq("ownerId", identity.subject)
-      )
+        q.eq(
+          "ownerId",
+          identity.subject.split("|")[0]
+        ))
       .collect();
 
     const total = tasks.length;

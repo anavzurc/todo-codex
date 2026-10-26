@@ -17,8 +17,10 @@ export const getTasks = query({
     const tasks = await ctx.db
       .query("tasks")
       .withIndex("by_owner", (q) =>
-        q.eq("ownerId", identity.subject)
-      )
+        q.eq(
+          "ownerId",
+          identity.subject.split("|")[0]
+        ))
       .collect();
 
     return tasks.sort(
@@ -53,7 +55,8 @@ handler: async (ctx, args) => {
       description: args.description,
       completed: false,
 
-      ownerId: identity.subject,
+      ownerId:
+        identity.subject.split("|")[0],
 
         createdAt: now,
         updatedAt: now,

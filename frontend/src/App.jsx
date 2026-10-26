@@ -153,6 +153,14 @@ return (
       Sessão ativa ✅
     </p>
 
+    {/* <pre>
+      {JSON.stringify(
+        user,
+        null,
+        2
+      )}
+    </pre> */}
+
     <button
       onClick={() => signOut()}
     >
